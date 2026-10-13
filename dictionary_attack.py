@@ -15,22 +15,22 @@ common_passwords = [
 ]
 
 print("=== Cracking with SHA-256 ===")
-start = time.time()
+start = time.perf_counter()
 found = False
 for guess in common_passwords:
     if hashlib.sha256(guess.encode()).hexdigest() == target_sha256:
-        print(f"CRACKED: '{guess}' in {time.time()-start:.6f} seconds")
+        print(f"CRACKED: '{guess}' in {time.perf_counter()-start:.6f} seconds")
         found = True
         break
 if not found:
     print("Not found in wordlist")
 
 print("\n=== Cracking with bcrypt ===")
-start = time.time()
+start = time.perf_counter()
 found = False
 for guess in common_passwords:
     if bcrypt.checkpw(guess.encode(), target_bcrypt):
-        print(f"CRACKED: '{guess}' in {time.time()-start:.6f} seconds")
+        print(f"CRACKED: '{guess}' in {time.perf_counter()-start:.6f} seconds")
         found = True
         break
 if not found:

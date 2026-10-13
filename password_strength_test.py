@@ -9,12 +9,12 @@ common_passwords = [
 
 def try_crack(target_hash, wordlist, label):
     print(f"\n=== Attempting to crack: {label} ===")
-    start = time.time()
+    start = time.perf_counter()
     for guess in wordlist:
         if hashlib.sha256(guess.encode()).hexdigest() == target_hash:
-            print(f"CRACKED: '{guess}' in {time.time()-start:.6f} seconds")
+            print(f"CRACKED: '{guess}' in {time.perf_counter()-start:.6f} seconds")
             return
-    elapsed = time.time() - start
+    elapsed = time.perf_counter() - start
     print(f"NOT FOUND after checking {len(wordlist)} candidates ({elapsed:.6f} seconds)")
 
 # Test 1: a weak, common password

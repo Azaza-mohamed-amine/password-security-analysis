@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/33000845/README.md)
 # Password Hashing & Security Analysis
 
 Hands-on comparison of password hashing algorithms (MD5, SHA-256, bcrypt), demonstrating why algorithm choice matters for password storage security.
@@ -6,18 +5,20 @@ Hands-on comparison of password hashing algorithms (MD5, SHA-256, bcrypt), demon
 ## What this project shows
 
 - 🔑 Why deterministic hashes (MD5, SHA-256) are unsafe for password storage
-- ⚡ Real throughput benchmarks: SHA-256 (~1.48M hashes/sec) vs bcrypt (~4 hashes/sec)
+- ⚡ Throughput benchmarks for MD5, SHA-256 and bcrypt: millions of hashes/sec vs ~4 hashes/sec
 - 🎯 A working dictionary attack demo against both algorithms
 - 🛡️ Why password strength and hashing strength are independent, complementary defenses
 
 ## Key result
 
-| Test | SHA-256 | bcrypt |
-|---|---|---|
-| Hashing speed | ~1,482,149/sec | ~4/sec |
-| Time to crack weak password (10-word list) | 0.000029s | 1.49s |
+| Test | MD5 | SHA-256 | bcrypt (cost 12) |
+|---|---|---|---|
+| Hashing speed (single CPU core, Python) | ~2.4M/sec | ~1.5–2.3M/sec | ~4/sec |
+| Time to crack weak password (10-word list) | — | 0.000029s | 1.49s |
 
-**→ bcrypt was ~370,000x slower to hash and ~51,000x slower to crack — by design.**
+**→ bcrypt was several hundred thousand times slower to hash and ~51,000x slower to crack — by design.**
+
+Absolute speeds depend on the machine (and real attackers use GPUs, which are far faster); the ratio between algorithms is the meaningful result. See [REPORT.md](REPORT.md) for both benchmark runs and the limitations.
 
 ## Tech stack
 
@@ -28,7 +29,7 @@ Python 3 · `hashlib` · `bcrypt`
 | File | Purpose |
 |---|---|
 | `hash_demo.py` | Compares raw hash output across MD5, SHA-256, bcrypt |
-| `speed_test.py` | Benchmarks hashing throughput |
+| `speed_test.py` | Benchmarks hashing throughput (MD5, SHA-256, bcrypt; 3 runs averaged) |
 | `dictionary_attack.py` | Simulates a dictionary attack on a weak password |
 | `password_strength_test.py` | Isolates the effect of password strength from hashing algorithm |
 | `REPORT.md` | Full write-up with methodology, findings, and recommendations |
