@@ -14,7 +14,7 @@ All tests were run locally in Python 3, using the standard `hashlib` library (MD
 
 1. Comparing raw hash output across three algorithms for the same input
 2. Benchmarking hashing throughput (hashes per second) for MD5, SHA-256 and bcrypt, with each benchmark repeated 3 times and averaged
-3. Simulating a dictionary attack against a weak password hashed with each algorithm
+3. Simulating a dictionary attack against a weak password hashed with SHA-256 and with bcrypt
 4. Testing whether password strength alone (independent of hashing algorithm) affects resistance to a dictionary attack
 
 ## 3. Finding 1 — Hash Output Comparison
@@ -46,7 +46,7 @@ Note that it is the **salt**, not bcrypt itself, that defeats precomputation: a 
 **Key observations:**
 
 - SHA-256 was roughly **547,000× faster** than bcrypt, and MD5 roughly **492,000× faster**. The absolute numbers depend on the machine and vary between runs; the ratio of several hundred thousand times is the stable result.
-- MD5 and SHA-256 come out at similar speeds here. In single-threaded Python, the per-call interpreter overhead (function call, `hexdigest()`) dominates the cost of the hash itself. Optimized cracking tools show the real gap: on GPUs, MD5 is several times faster than SHA-256.
+- MD5 and SHA-256 come out at similar speeds here, with SHA-256 even slightly ahead on average (and the MD5 min–max range overlapping it). Two reasons: in single-threaded Python, the per-call interpreter overhead (function call, `hexdigest()`) costs about as much as the hash itself, and many modern CPUs have dedicated SHA-256 instructions that the underlying OpenSSL library uses. Optimized cracking tools show the real gap: on GPUs, MD5 is several times faster than SHA-256.
 - For general-purpose hashing (file integrity, checksums), speed is a feature. For password storage it is a liability: an attacker with GPU hardware and tools like hashcat can attempt billions of MD5/SHA-256 guesses per second against a stolen database.
 - bcrypt is deliberately slow and does not speed up well on GPUs, so attacks against it are **orders of magnitude slower** — but not impossible. A GPU rig still achieves far more than the ~3.4 guesses/sec measured here on one CPU core, which is why the cost factor must be raised over time.
 
