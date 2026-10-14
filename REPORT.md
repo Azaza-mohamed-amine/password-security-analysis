@@ -67,8 +67,8 @@ To isolate the effect of password strength from hashing algorithm, two passwords
 
 | Password | Result |
 |---|---|
-| `123456` (weak, common) | Cracked in 0.000045s |
-| `Xk9#mP2$vL7qR4!wZ` (strong, random, 17 chars) | Not found |
+| `123456` (weak, common) | Cracked in 0.000011s |
+| `Xk9#mP2$vL7qR4!wZ` (strong, random, 17 chars) | Not found after all 10 candidates (0.000024s) |
 
 **Key observation:** A dictionary attack succeeds or fails based on whether the password is in the attacker's wordlist, not on hashing speed alone.
 
