@@ -5,7 +5,7 @@ Hands-on comparison of password hashing algorithms (MD5, SHA-256, bcrypt), demon
 ## What this project shows
 
 - 🔑 Why deterministic hashes (MD5, SHA-256) are unsafe for password storage
-- ⚡ Throughput benchmarks for MD5, SHA-256 and bcrypt: millions of hashes/sec vs ~4 hashes/sec
+- ⚡ Throughput benchmarks for MD5, SHA-256 and bcrypt: ~1.7–1.9 million hashes/sec vs ~3.4 hashes/sec
 - 🎯 A working dictionary attack demo against both algorithms
 - 🛡️ Why password strength and hashing strength are independent, complementary defenses
 
@@ -13,12 +13,12 @@ Hands-on comparison of password hashing algorithms (MD5, SHA-256, bcrypt), demon
 
 | Test | MD5 | SHA-256 | bcrypt (cost 12) |
 |---|---|---|---|
-| Hashing speed (single CPU core, Python) | ~2.4M/sec | ~1.5–2.3M/sec | ~4/sec |
+| Hashing speed (single CPU core, Python, 3-run average) | ~1.67M/sec | ~1.86M/sec | ~3.4/sec |
 | Time to crack weak password (10-word list) | — | 0.000029s | 1.49s |
 
-**→ bcrypt was several hundred thousand times slower to hash and ~51,000x slower to crack — by design.**
+**→ bcrypt was ~500,000x slower to hash and ~51,000x slower to crack — by design.**
 
-Absolute speeds depend on the machine (and real attackers use GPUs, which are far faster); the ratio between algorithms is the meaningful result. See [REPORT.md](REPORT.md) for both benchmark runs and the limitations.
+Absolute speeds depend on the machine (and real attackers use GPUs, which are far faster); the ratio between algorithms is the meaningful result. See [REPORT.md](REPORT.md) for the full results and limitations.
 
 ## Tech stack
 

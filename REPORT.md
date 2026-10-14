@@ -35,20 +35,20 @@ Note that it is the **salt**, not bcrypt itself, that defeats precomputation: a 
 
 ## 4. Finding 2 — Throughput Benchmark
 
-`speed_test.py` hashes the same password repeatedly with each algorithm, repeats each benchmark 3 times, and reports the average rate. Two runs on different machines:
+`speed_test.py` hashes the same password repeatedly with each algorithm, repeats each benchmark 3 times, and reports the average rate (with min and max to show the run-to-run variation):
 
-| Algorithm | Hashes per run | Run A — Windows laptop (original, single run) | Run B — Linux, Python 3.13 (3-run average) |
+| Algorithm | Hashes per run | Average rate (3 runs) | Min – max |
 |---|---|---|---|
-| MD5 | 100,000 | not measured | ~2,369,000 hashes/sec |
-| SHA-256 | 100,000 | ~1,482,000 hashes/sec | ~2,264,000 hashes/sec |
-| bcrypt (cost 12) | 100 (A) / 20 (B) | ~4 hashes/sec | ~3.6 hashes/sec |
+| MD5 | 100,000 | ~1,672,539 hashes/sec | 1,499,900 – 1,926,441 |
+| SHA-256 | 100,000 | ~1,860,932 hashes/sec | 1,814,780 – 1,914,037 |
+| bcrypt (cost 12) | 20 | ~3.4 hashes/sec | 2.9 – 3.7 |
 
 **Key observations:**
 
-- SHA-256 was roughly **370,000× (Run A) to 620,000× (Run B) faster** than bcrypt. The absolute numbers depend on the machine; the ratio of several hundred thousand times is the stable result.
+- SHA-256 was roughly **547,000× faster** than bcrypt, and MD5 roughly **492,000× faster**. The absolute numbers depend on the machine and vary between runs; the ratio of several hundred thousand times is the stable result.
 - MD5 and SHA-256 come out at similar speeds here. In single-threaded Python, the per-call interpreter overhead (function call, `hexdigest()`) dominates the cost of the hash itself. Optimized cracking tools show the real gap: on GPUs, MD5 is several times faster than SHA-256.
 - For general-purpose hashing (file integrity, checksums), speed is a feature. For password storage it is a liability: an attacker with GPU hardware and tools like hashcat can attempt billions of MD5/SHA-256 guesses per second against a stolen database.
-- bcrypt is deliberately slow and does not speed up well on GPUs, so attacks against it are **orders of magnitude slower** — but not impossible. A GPU rig still achieves far more than the ~4 guesses/sec measured here on one CPU core, which is why the cost factor must be raised over time.
+- bcrypt is deliberately slow and does not speed up well on GPUs, so attacks against it are **orders of magnitude slower** — but not impossible. A GPU rig still achieves far more than the ~3.4 guesses/sec measured here on one CPU core, which is why the cost factor must be raised over time.
 
 ## 5. Finding 3 — Dictionary Attack Simulation
 
@@ -59,7 +59,7 @@ Using a small 10-entry sample wordlist of common passwords, the password `passwo
 | SHA-256 | Cracked | 0.000029s |
 | bcrypt | Cracked | 1.491225s |
 
-**Key observation:** Even against a trivially small 10-word list, bcrypt took roughly **51,000 times longer** to crack the same password. Real-world attacks use wordlists with millions of entries (e.g. the leaked `rockyou.txt` corpus, ~14 million entries). At the measured rates on a single CPU core, running that whole list against one SHA-256 hash takes a few seconds, while against one bcrypt hash it would take on the order of 45 days. GPU hardware shortens both, but the gap between them remains several orders of magnitude.
+**Key observation:** Even against a trivially small 10-word list, bcrypt took roughly **51,000 times longer** to crack the same password. Real-world attacks use wordlists with millions of entries (e.g. the leaked `rockyou.txt` corpus, ~14 million entries). At the measured rates on a single CPU core, running that whole list against one SHA-256 hash takes a few seconds, while against one bcrypt hash it would take roughly 48 days. GPU hardware shortens both, but the gap between them remains several orders of magnitude.
 
 ## 6. Finding 4 — Password Strength as an Independent Variable
 
@@ -97,10 +97,10 @@ This demonstrates that **password strength and hashing algorithm strength are tw
 
 ## 9. Tools & Environment
 
-- Python 3.x (Run B: Python 3.13)
+- Python 3.14
 - `hashlib` (standard library)
 - `bcrypt` (PyPI package)
-- Run A: Windows 10/11 laptop. Run B: Linux. Both local, no network exposure.
+- Windows 10/11 laptop, local machine, no network exposure
 
 ## Repository Structure
 
