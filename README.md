@@ -14,9 +14,9 @@ Hands-on comparison of password hashing algorithms (MD5, SHA-256, bcrypt), demon
 | Test | MD5 | SHA-256 | bcrypt (cost 12) |
 |---|---|---|---|
 | Hashing speed (single CPU core, Python, 3-run average) | ~1.67M/sec | ~1.86M/sec | ~3.4/sec |
-| Time to crack weak password (10-word list) | — | 0.000029s | 1.49s |
+| Time to crack weak password (10-word list) | — | 0.000037s | 2.26s |
 
-**→ bcrypt was ~500,000x slower to hash and ~51,000x slower to crack — by design.**
+**→ bcrypt was ~500,000x slower to hash and ~61,000x slower to crack — by design.**
 
 Absolute speeds depend on the machine (and real attackers use GPUs, which are far faster); the ratio between algorithms is the meaningful result. See [REPORT.md](REPORT.md) for the full results and limitations.
 

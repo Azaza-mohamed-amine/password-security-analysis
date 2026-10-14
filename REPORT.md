@@ -56,10 +56,10 @@ Using a small 10-entry sample wordlist of common passwords, the password `passwo
 
 | Algorithm | Result | Time to crack |
 |---|---|---|
-| SHA-256 | Cracked | 0.000029s |
-| bcrypt | Cracked | 1.491225s |
+| SHA-256 | Cracked | 0.000037s |
+| bcrypt | Cracked | 2.258182s |
 
-**Key observation:** Even against a trivially small 10-word list, bcrypt took roughly **51,000 times longer** to crack the same password. Real-world attacks use wordlists with millions of entries (e.g. the leaked `rockyou.txt` corpus, ~14 million entries). At the measured rates on a single CPU core, running that whole list against one SHA-256 hash takes a few seconds, while against one bcrypt hash it would take roughly 48 days. GPU hardware shortens both, but the gap between them remains several orders of magnitude.
+**Key observation:** Even against a trivially small 10-word list, bcrypt took roughly **61,000 times longer** to crack the same password. Real-world attacks use wordlists with millions of entries (e.g. the leaked `rockyou.txt` corpus, ~14 million entries). At the measured rates on a single CPU core, running that whole list against one SHA-256 hash takes a few seconds, while against one bcrypt hash it would take roughly 48 days. GPU hardware shortens both, but the gap between them remains several orders of magnitude.
 
 ## 6. Finding 4 — Password Strength as an Independent Variable
 
