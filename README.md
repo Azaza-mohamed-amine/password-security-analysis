@@ -1,42 +1,30 @@
 # Password Hashing & Security Analysis
 
-Hands-on comparison of password hashing algorithms (MD5, SHA-256, bcrypt), demonstrating why algorithm choice matters for password storage security.
+I wanted to see for myself why the choice of hashing algorithm matters when a website stores passwords. So I compared MD5, SHA-256 and bcrypt in Python: what their hashes look like, how fast they are, and how long a simple dictionary attack takes against each.
 
-## What this project shows
+## What I found
 
-- 🔑 Why deterministic hashes (MD5, SHA-256) are unsafe for password storage
-- ⚡ Throughput benchmarks for MD5, SHA-256 and bcrypt: ~1.7–1.9 million hashes/sec vs ~3.4 hashes/sec
-- 🎯 A working dictionary attack demo against both algorithms
-- 🛡️ Why password strength and hashing strength are independent, complementary defenses
-
-## Key result
-
-| Test | MD5 | SHA-256 | bcrypt (cost 12) |
+| | MD5 | SHA-256 | bcrypt (cost 12) |
 |---|---|---|---|
-| Hashing speed (single CPU core, Python, 3-run average) | ~1.67M/sec | ~1.86M/sec | ~3.4/sec |
-| Time to crack weak password (10-word list) | — | 0.000037s | 2.26s |
+| Hashes per second (one CPU core, average of 3 runs) | ~1.67M | ~1.86M | ~3.4 |
+| Time to crack `password123` with a 10-word list | — | 0.000037 s | 2.26 s |
 
-**→ bcrypt was ~500,000x slower to hash and ~61,000x slower to crack — by design.**
+bcrypt was about 500,000 times slower to hash and about 61,000 times slower to crack. That's on purpose: a login only needs one hash, but an attacker needs millions.
 
-Absolute speeds depend on the machine (and real attackers use GPUs, which are far faster); the ratio between algorithms is the meaningful result. See [REPORT.md](REPORT.md) for the full results and limitations.
+The exact numbers depend on the machine, and real attackers use GPUs, which are much faster. What matters is the gap between the algorithms. The other thing I learned is that a slow hash doesn't save a weak password: `123456` still falls on the first guess. You need both a good algorithm and a good password.
 
-## Tech stack
+The full write-up, with the method and the limitations, is in [REPORT.md](REPORT.md).
 
-Python 3 · `hashlib` · `bcrypt`
+## The scripts
 
-## Files
-
-| File | Purpose |
+| File | What it does |
 |---|---|
-| `hash_demo.py` | Compares raw hash output across MD5, SHA-256, bcrypt |
-| `speed_test.py` | Benchmarks hashing throughput (MD5, SHA-256, bcrypt; 3 runs averaged) |
-| `dictionary_attack.py` | Simulates a dictionary attack on a weak password |
-| `password_strength_test.py` | Isolates the effect of password strength from hashing algorithm |
-| `REPORT.md` | Full write-up with methodology, findings, and recommendations |
+| `hash_demo.py` | Hashes the same password with all three and prints the results |
+| `speed_test.py` | Measures hashes per second for each (3 runs, averaged) |
+| `dictionary_attack.py` | Tries to crack a weak password hashed with SHA-256 and with bcrypt |
+| `password_strength_test.py` | Same algorithm, weak vs strong password, to see if the password alone makes a difference |
 
-📄 **[Read the full report →](REPORT.md)**
-
-## Run it yourself
+## Running it
 
 ```bash
 pip install bcrypt
@@ -46,6 +34,6 @@ python dictionary_attack.py
 python password_strength_test.py
 ```
 
----
+Built with Python 3, `hashlib` and `bcrypt`.
 
-**Author:** Mohamed Amine Azaza — CS Student, Università del Piemonte Orientale
+Mohamed Amine Azaza, CS student at Università del Piemonte Orientale

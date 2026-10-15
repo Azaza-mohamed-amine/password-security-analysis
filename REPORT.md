@@ -1,115 +1,114 @@
 # Password Hashing & Security Analysis
 
-**Author:** Mohamed Amine Azaza
-**Date:** October 2026
-**Domain:** Cryptography / Password Security (CompTIA Security+ aligned)
+Mohamed Amine Azaza, October 2026
 
-## 1. Objective
+## 1. Why I did this
 
-Password storage is one of the most common and most frequently mismanaged areas of application security. Many real-world breaches trace back to weak hashing choices rather than exotic attacks. This project investigates, empirically, why general-purpose hashing algorithms (MD5, SHA-256) are unsuitable for password storage, and why purpose-built algorithms like bcrypt are the correct choice — using hands-on benchmarks rather than theory alone.
+When a company gets breached, the password database is often one of the things stolen. Websites don't keep the passwords themselves, only hashes of them, so how safe users are comes down to how hard those hashes are to crack. I'd read that fast algorithms like MD5 and SHA-256 are a bad idea for passwords and that bcrypt is the right choice, but I wanted to measure it myself instead of taking it on faith. This ties in with what I'm studying for CompTIA Security+.
 
-## 2. Methodology
+## 2. How I tested it
 
-All tests were run locally in Python 3, using the standard `hashlib` library (MD5, SHA-256) and the `bcrypt` library (bcrypt, cost factor 12 — the library default). Timings use `time.perf_counter()`, Python's high-resolution timer. Four experiments were conducted:
+Everything runs locally in Python 3. I used the built-in `hashlib` library for MD5 and SHA-256, and the `bcrypt` library with its default cost factor of 12. For timing I used `time.perf_counter()`, which is Python's high-resolution timer.
 
-1. Comparing raw hash output across three algorithms for the same input
-2. Benchmarking hashing throughput (hashes per second) for MD5, SHA-256 and bcrypt, with each benchmark repeated 3 times and averaged
-3. Simulating a dictionary attack against a weak password hashed with SHA-256 and with bcrypt
-4. Testing whether password strength alone (independent of hashing algorithm) affects resistance to a dictionary attack
+I ran four small experiments, one script each:
 
-## 3. Finding 1 — Hash Output Comparison
+1. Hash the same password with all three algorithms and compare the output
+2. Measure how many hashes per second each one can do, repeating each test 3 times and averaging
+3. Try to crack a weak password hashed with SHA-256 and with bcrypt, using a short wordlist
+4. Keep the algorithm the same and change only the password, to see whether password strength matters on its own
 
-Hashing the password `Summer2024!` with three algorithms produced:
+## 3. What the hashes look like
+
+I hashed `Summer2024!` with each algorithm:
 
 | Algorithm | Output | Length |
 |---|---|---|
-| MD5 | `f065d609e55983bc6087c073c91c9bc7` | 128-bit |
-| SHA-256 | `323725e8eff4df0a4974d6ea8c73017aa6467d94e09382745b7a988cec0fba0a` | 256-bit |
-| bcrypt | `$2b$12$S5iDqNlJmx1jmQdxUCTgau.Y8NA4zN9cSh42cfUX.AnfSpOncyPoq` | includes embedded salt + cost factor |
+| MD5 | `f065d609e55983bc6087c073c91c9bc7` | 128 bits |
+| SHA-256 | `323725e8eff4df0a4974d6ea8c73017aa6467d94e09382745b7a988cec0fba0a` | 256 bits |
+| bcrypt | `$2b$12$S5iDqNlJmx1jmQdxUCTgau.Y8NA4zN9cSh42cfUX.AnfSpOncyPoq` | includes the salt and cost |
 
-The bcrypt string is self-describing: `$2b$` is the algorithm version, `12` is the cost factor (2¹² = 4,096 rounds), the next 22 characters are the 128-bit salt, and the remaining 31 characters are the hash itself.
+The bcrypt string carries everything needed to check a password later: `$2b$` is the version, `12` is the cost factor (2¹² = 4,096 rounds), the next 22 characters are a 128-bit salt, and the last 31 are the hash itself.
 
-**Key observation:** unsalted MD5 and SHA-256 are deterministic — the same input always produces the identical output, on any machine. This is what makes them exploitable via precomputed lookup tables (rainbow tables), and it means every user with the same password gets the same hash. bcrypt generates a random salt and embeds it in the hash string, so re-hashing the identical password gives a different result on every run.
+Running the script twice shows the main difference. MD5 and SHA-256 give exactly the same output every time, on any machine. That's what makes precomputed lookup tables (rainbow tables) work against them, and it means two users with the same password end up with the same hash. bcrypt generates a new random salt each time, so the output changes on every run.
 
-Note that it is the **salt**, not bcrypt itself, that defeats precomputation: a salted SHA-256 would also make rainbow tables useless. What bcrypt adds on top of salting is deliberate **slowness** (the cost factor), which is examined in Finding 2.
+One thing I had to get straight: it's the salt that defeats rainbow tables, not bcrypt as such. A salted SHA-256 would beat them too. What bcrypt adds on top is that it's deliberately slow, which is what the next test measures.
 
-## 4. Finding 2 — Throughput Benchmark
+## 4. How fast each one is
 
-`speed_test.py` hashes the same password repeatedly with each algorithm, repeats each benchmark 3 times, and reports the average rate (with min and max to show the run-to-run variation):
+`speed_test.py` hashes the same password over and over with each algorithm, three times, and reports the average along with the slowest and fastest run:
 
-| Algorithm | Hashes per run | Average rate (3 runs) | Min – max |
+| Algorithm | Hashes per run | Average (3 runs) | Range |
 |---|---|---|---|
-| MD5 | 100,000 | ~1,672,539 hashes/sec | 1,499,900 – 1,926,441 |
-| SHA-256 | 100,000 | ~1,860,932 hashes/sec | 1,814,780 – 1,914,037 |
-| bcrypt (cost 12) | 20 | ~3.4 hashes/sec | 2.9 – 3.7 |
+| MD5 | 100,000 | ~1,672,539 per second | 1,499,900 – 1,926,441 |
+| SHA-256 | 100,000 | ~1,860,932 per second | 1,814,780 – 1,914,037 |
+| bcrypt (cost 12) | 20 | ~3.4 per second | 2.9 – 3.7 |
 
-**Key observations:**
+SHA-256 came out about 547,000 times faster than bcrypt, and MD5 about 492,000 times faster. I only ran 20 bcrypt hashes per round because 100,000 would have taken around 8 hours. Since I compare hashes per second, the different counts don't affect the comparison.
 
-- SHA-256 was roughly **547,000× faster** than bcrypt, and MD5 roughly **492,000× faster**. The absolute numbers depend on the machine and vary between runs; the ratio of several hundred thousand times is the stable result.
-- MD5 and SHA-256 come out at similar speeds here, with SHA-256 even slightly ahead on average (and the MD5 min–max range overlapping it). Two reasons: in single-threaded Python, the per-call interpreter overhead (function call, `hexdigest()`) costs about as much as the hash itself, and many modern CPUs have dedicated SHA-256 instructions that the underlying OpenSSL library uses. Optimized cracking tools show the real gap: on GPUs, MD5 is several times faster than SHA-256.
-- For general-purpose hashing (file integrity, checksums), speed is a feature. For password storage it is a liability: an attacker with GPU hardware and tools like hashcat can attempt billions of MD5/SHA-256 guesses per second against a stolen database.
-- bcrypt is deliberately slow and does not speed up well on GPUs, so attacks against it are **orders of magnitude slower** — but not impossible. A GPU rig still achieves far more than the ~3.4 guesses/sec measured here on one CPU core, which is why the cost factor must be raised over time.
+I expected MD5 to be clearly faster than SHA-256, but SHA-256 was slightly ahead, and the MD5 range overlaps it. I think there are two reasons. In single-threaded Python, the overhead of each function call costs about as much as the hash itself. And many modern CPUs have built-in instructions for SHA-256 that the underlying OpenSSL library uses. Proper cracking tools on GPUs show the real gap, where MD5 is several times faster.
 
-## 5. Finding 3 — Dictionary Attack Simulation
+For checking file integrity, speed is a good thing. For passwords it's the opposite: with GPUs and a tool like hashcat, an attacker can try billions of MD5 or SHA-256 guesses per second against a stolen database. bcrypt is built to be slow and doesn't speed up well on GPUs, so attacks against it are orders of magnitude slower. They're not impossible, though. A GPU rig gets far more than the ~3.4 guesses per second I measured on one CPU core, which is why the cost factor has to go up as hardware improves.
 
-Using a small 10-entry sample wordlist of common passwords, the password `password123` (7th entry in the list) was hashed with SHA-256 and bcrypt, then an attack script attempted to match each against the wordlist. Hash-and-compare is how real cracking works: a hash is never "reversed", each guess is hashed and compared to the stolen hash. For bcrypt, `bcrypt.checkpw()` re-hashes each guess using the salt and cost stored in the target hash.
+## 5. Cracking a weak password
 
-| Algorithm | Result | Time to crack |
+I hashed `password123` with SHA-256 and with bcrypt, then tried to crack both with a 10-word list of common passwords (`password123` is the 7th). Cracking never reverses a hash. You guess, hash the guess and compare it with the stolen hash. For bcrypt the script uses `bcrypt.checkpw()`, which reads the salt and cost from the stored hash and reuses them, just like a real login check.
+
+| Algorithm | Result | Time |
 |---|---|---|
-| SHA-256 | Cracked | 0.000037s |
-| bcrypt | Cracked | 2.258182s |
+| SHA-256 | Cracked | 0.000037 s |
+| bcrypt | Cracked | 2.258182 s |
 
-**Key observation:** Even against a trivially small 10-word list, bcrypt took roughly **61,000 times longer** to crack the same password. Real-world attacks use wordlists with millions of entries (e.g. the leaked `rockyou.txt` corpus, ~14 million entries). At the measured rates on a single CPU core, running that whole list against one SHA-256 hash takes a few seconds, while against one bcrypt hash it would take roughly 48 days. GPU hardware shortens both, but the gap between them remains several orders of magnitude.
+Even with only 10 words, bcrypt took about 61,000 times longer. Real attackers use lists with millions of entries, like the leaked `rockyou.txt` with about 14 million passwords. At the speeds I measured on one CPU core, going through that list takes a few seconds against a SHA-256 hash and roughly 48 days against a bcrypt hash. GPUs shorten both, but the gap stays huge.
 
-## 6. Finding 4 — Password Strength as an Independent Variable
+## 6. Does the password itself matter?
 
-To isolate the effect of password strength from hashing algorithm, two passwords were hashed with SHA-256 (the weaker, faster algorithm) and tested against the same 10-word list:
+To separate the password from the algorithm, I used SHA-256 (the fast, weak one) for both tests and changed only the password:
 
 | Password | Result |
 |---|---|
-| `123456` (weak, common) | Cracked in 0.000011s |
-| `Xk9#mP2$vL7qR4!wZ` (strong, random, 17 chars) | Not found after all 10 candidates (0.000024s) |
+| `123456` (weak, very common) | Cracked in 0.000011 s |
+| `Xk9#mP2$vL7qR4!wZ` (17 random characters) | Not found after all 10 candidates (0.000024 s) |
 
-**Key observation:** A dictionary attack succeeds or fails based on whether the password is in the attacker's wordlist, not on hashing speed alone.
+A dictionary attack only works if the password is on the list, however fast the hash is.
 
-Not being found in a 10-word list is only a demonstration; on its own it proves little. The real argument is the size of the search space: a random 17-character password drawn from the ~94 printable ASCII characters has about 94¹⁷ ≈ 3.5 × 10³³ possibilities (~111 bits of entropy). It will not appear in any leaked wordlist, and brute-forcing it is infeasible even at billions of SHA-256 guesses per second.
+I know "not found in 10 words" doesn't prove much by itself. The real point is the number of possibilities: 17 random characters from the ~94 printable ASCII characters give about 94¹⁷ ≈ 3.5 × 10³³ combinations (~111 bits). A password like that won't be in any leaked list, and brute-forcing it isn't feasible even at billions of guesses per second.
 
-By contrast, a password like `Summer2024!` *looks* strong (capital, digits, symbol) but follows a predictable "word + year + symbol" pattern. Real attackers apply mutation rules to wordlists (capitalization, appended years, trailing `!`), so passwords like this are cracked far faster than their length suggests.
+On the other hand, `Summer2024!` looks strong because it has a capital, numbers and a symbol, but it follows a very common pattern: word, year, exclamation mark. Attackers add rules like that to their wordlists, so passwords like this fall much faster than their length suggests.
 
-This demonstrates that **password strength and hashing algorithm strength are two independent, complementary layers of defense** — neither compensates fully for a failure in the other.
+So password strength and hash strength are two separate layers of defence, and neither one makes up for the other.
 
-## 7. Conclusions & Recommendations
+## 7. What I'd recommend
 
-1. **Never use MD5 or raw SHA-256 for password storage.** Both are fast and, unsalted, deterministic — vulnerable to precomputed and brute-force attacks at scale.
-2. **Use a purpose-built, slow, salted algorithm.** Argon2id is the current first recommendation (OWASP) because it is also memory-hard, which further limits GPU attacks; bcrypt and scrypt remain acceptable.
-3. **Enforce password strength requirements independently of hashing choice.** Strong hashing does not excuse weak user passwords, and strong passwords do not excuse weak hashing — both layers are necessary.
-4. **Adjust bcrypt's cost factor over time** as hardware improves. Each +1 doubles the work per hash.
+1. Don't store passwords with MD5 or plain SHA-256. They're fast, and without a salt they're deterministic.
+2. Use an algorithm made for passwords. Argon2id is OWASP's first recommendation today because it's also memory-hard, which makes GPU attacks harder. bcrypt and scrypt are still fine.
+3. Enforce strong passwords anyway. A good algorithm doesn't excuse weak passwords, and strong passwords don't excuse a weak algorithm.
+4. Raise bcrypt's cost factor over time as hardware gets faster. Each +1 doubles the work.
 
-## 8. Limitations & Future Work
+## 8. Limitations and next steps
 
-- **Single-threaded Python on a CPU.** These speeds are far below what attackers achieve with optimized GPU tools; the ratios are the meaningful result, not the absolute numbers.
-- **Toy wordlist.** The 10-word list is for demonstration only.
-- **Next steps:**
-  - add Argon2 to the benchmark
-  - test several bcrypt cost factors (10–14) to show the doubling effect
-  - use a real wordlist such as `rockyou.txt` with mutation rules
-  - compare with GPU cracking in hashcat to measure realistic attacker speeds
+- These are single-threaded Python numbers on one laptop CPU. Attackers with GPU tools are much faster, so the ratios matter more than the absolute numbers.
+- The 10-word list is only a demonstration.
 
-## 9. Tools & Environment
+What I'd like to try next:
 
-- Python 3.14
-- `hashlib` (standard library)
-- `bcrypt` (PyPI package)
-- Windows 10/11 laptop, local machine, no network exposure
+- add Argon2 to the benchmark
+- test several bcrypt cost factors (10 to 14) to show the doubling
+- use a real wordlist like `rockyou.txt` with mutation rules
+- measure real attacker speeds with hashcat on a GPU
 
-## Repository Structure
+## 9. Setup
+
+- Python 3.14 on a Windows 10/11 laptop, run locally with no network exposure
+- `hashlib` (standard library) and `bcrypt` (from PyPI)
+
+## Files
 
 ```
 password-security-analysis/
-├── hash_demo.py                  # Finding 1: hash output comparison
-├── speed_test.py                 # Finding 2: throughput benchmark (MD5, SHA-256, bcrypt)
-├── dictionary_attack.py          # Finding 3: dictionary attack simulation
-├── password_strength_test.py     # Finding 4: password strength independence
-├── README.md                     # Project overview
-└── REPORT.md                     # This report
+├── hash_demo.py                  # section 3: what the hashes look like
+├── speed_test.py                 # section 4: speed benchmark (MD5, SHA-256, bcrypt)
+├── dictionary_attack.py          # section 5: dictionary attack
+├── password_strength_test.py     # section 6: weak vs strong password
+├── README.md                     # short overview
+└── REPORT.md                     # this report
 ```
